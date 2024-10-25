@@ -1,0 +1,66 @@
+services:
+  ollama:
+    image: ollama/ollama
+    expose:
+      - 11434/tcp
+    runtime: nvidia
+    build:
+      context: .
+      dockerfile: Dockerfile
+    healthcheck:
+      test: llama --version
+    volumes:
+      - ./llama:/root/.llama
+      - ./entrypoint.sh:/root/entrypoint.sh
+    entrypoint: ["/bin/sh", "/root/entrypoint.sh"]
+    networks:
+      - general
+
+  qdrant:
+    image: qdrant/qdrant
+    expose:
+      - 6333/tcp
+      - 80/tcp
+    networks:
+      - general
+
+  mongo_db:
+    image: mongo:latest
+    container_name: mongo_db
+    environment:
+      - MONGO_INITDB_DATABASE=prod
+    expose:
+      - 27017/tcp
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - general
+
+  solution:
+    container_name: solution
+    runtime: nvidia
+    environment:
+      DEV: True
+    expose:
+      - 443/tcp
+    ports:
+      - "443:443"
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    dns:
+      - "1.1.1.1"
+    depends_on:
+      - ollama
+      - mongo_db
+    command: [ "/bin/sh", "-c", "python3.12 app/bot/__main__.py" ]
+    networks:
+      - general
+
+
+volumes:
+  mongo-data:
+
+networks:
+  general:
+    driver: bridge

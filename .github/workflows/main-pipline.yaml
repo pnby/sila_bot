@@ -1,0 +1,66 @@
+name: Code Quality Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install Ruff
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff
+
+      - name: Run Ruff Linter
+        id: lint
+        run: |
+          ruff check . > ruff_output.txt || true
+
+      - name: Parse Ruff Results
+        id: parse_ruff
+        run: |
+          ERROR_COUNT=$(grep -c 'E' ruff_output.txt || true)
+          WARNING_COUNT=$(grep -c 'W' ruff_output.txt || true)
+          echo "::set-output name=errors::$ERROR_COUNT"
+          echo "::set-output name=warnings::$WARNING_COUNT"
+
+      - name: Update README with Lint Results
+        if: ${{ steps.parse_ruff.outputs.errors || steps.parse_ruff.outputs.warnings }}
+        run: |
+          TABLE="\n| Metric           | Count |\n|------------------|-------|\n"
+          TABLE+="| Ruff Errors      | ${{ steps.parse_ruff.outputs.errors }} |\n"
+          TABLE+="| Ruff Warnings    | ${{ steps.parse_ruff.outputs.warnings }} |\n"
+
+          sed -i '/### Code Quality Results/q' README.md
+          echo -e "### Code Quality Results\n$TABLE" >> README.md
+
+      - name: Commit README updates
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Update README with latest code quality results"
+          file_pattern: README.md
+
+  run_solution:
+    runs-on: ubuntu-latest
+    needs: lint
+    container:
+      image: nvidia/cuda:11.8.0-cudnn8-devel-ubuntu20.04
+      options: --gpus all
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Run Solution
+        run: |
+          docker compose up --build
