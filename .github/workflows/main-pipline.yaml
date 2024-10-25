@@ -35,7 +35,14 @@ jobs:
         run: |
           ERROR_COUNT=${{ steps.parse_ruff.outputs.errors }}
           WARNING_COUNT=${{ steps.parse_ruff.outputs.warnings }}
-          BADGE_URL="https://img.shields.io/badge/Code%20Quality-Errors%20${ERROR_COUNT}%20Warnings%20${WARNING_COUNT}-${{ ERROR_COUNT == 0 && WARNING_COUNT == 0 && 'brightgreen' || ERROR_COUNT == 0 && 'yellow' || 'red' }}"
+          if [ "$ERROR_COUNT" -eq 0 ] && [ "$WARNING_COUNT" -eq 0 ]; then
+            COLOR="brightgreen"
+          elif [ "$ERROR_COUNT" -eq 0 ]; then
+            COLOR="yellow"
+          else
+            COLOR="red"
+          fi
+          BADGE_URL="https://img.shields.io/badge/Code%20Quality-Errors%20${ERROR_COUNT}%20Warnings%20${WARNING_COUNT}-${COLOR}"
           echo "::set-output name=badge_url::$BADGE_URL"
 
       - name: Update README with Badge
