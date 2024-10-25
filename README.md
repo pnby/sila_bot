@@ -9,6 +9,7 @@
 - Qwen2:70b (LLM)
 - Whisper-base (STT)
 - Qdrant + USER-bge-m3 (Embeddings)### Code Quality Results
+### Code Quality Results
 
 | Metric           | Count |
 |------------------|-------|
