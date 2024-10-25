@@ -8,4 +8,10 @@
 - Ollama (API)
 - Qwen2:70b (LLM)
 - Whisper-base (STT)
-- Qdrant + USER-bge-m3 (Embeddings)
+- Qdrant + USER-bge-m3 (Embeddings)### Code Quality Results
+
+| Metric           | Count |
+|------------------|-------|
+| Ruff Errors      | 0 |
+| Ruff Warnings    | 0 |
+
