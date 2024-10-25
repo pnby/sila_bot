@@ -68,6 +68,7 @@ jobs:
 
       - name: Install Docker Compose
         run: |
+          export DEBIAN_FRONTEND=noninteractive
           apt-get update
           apt-get install -y ca-certificates curl
           install -m 0755 -d /etc/apt/keyrings
