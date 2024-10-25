@@ -5,6 +5,8 @@ on: push
 jobs:
   lint:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout code
@@ -41,7 +43,6 @@ jobs:
       - name: Commit README updates
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          token: ${{ secrets.ACTIONS_DEPLOY_KEY }}
           commit_message: "Update README with latest code quality results"
           file_pattern: README.md
 
