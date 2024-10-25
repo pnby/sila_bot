@@ -48,8 +48,7 @@ jobs:
       - name: Update README with Badge
         run: |
           BADGE_URL=${{ steps.generate_badge.outputs.badge_url }}
-          sed -i '/<!-- CODE_QUALITY_BADGE -->/d' README.md
-          echo -e "\n<!-- CODE_QUALITY_BADGE -->\n[![Code Quality]($BADGE_URL)](#code-quality-results)\n" >> README.md
+          sed -i '1i\<!-- CODE_QUALITY_BADGE -->\n[![Code Quality]('$BADGE_URL')](#code-quality-results)\n' README.md
 
       - name: Commit README updates
         uses: stefanzweifel/git-auto-commit-action@v4
@@ -69,8 +68,8 @@ jobs:
 
       - name: Install Docker Compose
         run: |
-          sudo apt-get update
-          sudo apt-get install -y docker-compose
+          apt-get update
+          apt-get install -y docker-compose
 
       - name: Run Solution
         run: |
