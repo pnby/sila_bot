@@ -1,18 +1,20 @@
+import json
 from time import perf_counter
-from typing import override, final, Optional
+from typing import override, final, Optional, AsyncGenerator
 
 import aiohttp
 
 from app.bot import logger
 from app.bot.api.ollama.base_ollama import BaseOllama
 from app.bot.config import available_llm_models
+from app.bot.utils.utils import clean_text
 
 
 @final
 class Ollama(BaseOllama):
     def __init__(self, prompt: str, model: available_llm_models = available_llm_models,
-                 stream: bool = False, endpoint: str = "http://ollama:11434/api/generate",
-                 system_prompt: Optional[str] = None):
+                 stream: bool = False, endpoint: str = "http://localhost:11434/api/generate",
+                 system_prompt: Optional[str] = None, temperature: float = 0.1):
         """
         Initialize the Llama class.
 
@@ -23,7 +25,7 @@ class Ollama(BaseOllama):
             endpoint (str, optional): The API endpoint to send the request to. Defaults to "http://ollama:11434/api/generate".
             system_prompt (str, optional): System prompt for the model.
         """
-        super().__init__(prompt=prompt, model=model, stream=stream, endpoint=endpoint, system_prompt=system_prompt)
+        super().__init__(prompt=prompt, model=model, stream=stream, endpoint=endpoint, system_prompt=system_prompt, temperature=temperature)
 
     @override
     async def send_request(self) -> None:
@@ -39,7 +41,7 @@ class Ollama(BaseOllama):
             "prompt": self.prompt,
             "stream": self.stream,
             "options": {
-                "temperature": 0.3
+                "temperature": self.temperature
             },
         }
 
@@ -57,6 +59,41 @@ class Ollama(BaseOllama):
                     logger.warning(f"Error: {response.status}\n{await response.json()}")
 
         logger.info(f"The LLM response was {perf_counter() - start_time} second")
+
+    @override
+    async def stream_response(self) -> AsyncGenerator[str, None]:
+        """
+        Stream the response from the model.
+
+        This method sends a POST request with streaming enabled and yields parts of the response
+        as they are received, enabling real-time streaming of the model's output.
+
+        Yields:
+            str: The next part of the response.
+        """
+        url = self.endpoint
+        data = {
+            "model": self.model,
+            "prompt": self.prompt,
+            "stream": True,
+            "options": {
+                "temperature": self.temperature,
+                "num_ctx": 32768,
+            },
+        }
+
+        if self.system_prompt is not None:
+            data["system"] = self.system_prompt
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=data) as response:
+                if response.status == 200:
+                    async for line in response.content:
+                        line = line.decode('utf-8')
+                        jsn = json.loads(line)
+                        yield jsn['response']
+                else:
+                    logger.warning(f"Error: {response.status}\n{await response.json()}")
 
     @override
     def get_formatted_response(self) -> str:

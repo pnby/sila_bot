@@ -1,10 +1,14 @@
+import asyncio
 import os
+from functools import cache
 
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, File
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, File, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from docx import Document
 
 from app.bot import logger
 from app.bot.config import UPLOADS_DIR
+from app.bot.keyboards.staff import back_to_document_management_button
 
 
 def create_paginated_keyboard_from_directory(directory: str = UPLOADS_DIR, page: int = 1, items_per_page: int = 5) -> InlineKeyboardMarkup:
@@ -36,8 +40,53 @@ def create_paginated_keyboard_from_directory(directory: str = UPLOADS_DIR, page:
     if nav_buttons:
         kb_builder.row(*nav_buttons)
 
-    return kb_builder.as_markup()
+    kb_builder.row(back_to_document_management_button)
 
+    keyboard = kb_builder.as_markup()
+    return keyboard
+
+@cache
+def extract_text_from_docx(file_path: str) -> str:
+    """
+    Extracts all text from a DOCX file.
+
+    :param file_path: Path to the DOCX file.
+    :return: Text from the DOCX file as a string.
+    """
+    doc = Document(file_path)
+    full_text = []
+
+    for para in doc.paragraphs:
+        full_text.append(para.text)
+
+    return '\n'.join(full_text)
+
+def extract_text_from_all_docx_files(directory: str) -> str:
+    """
+    Extracts text from all DOCX files in the specified directory.
+
+    :param directory: Path to the directory.
+    :return: A dictionary where the keys are the file names and the values are the extracted text.
+    """
+    string = ""
+
+    for filename in os.listdir(directory):
+        if filename.endswith('.docx'):
+            file_path = os.path.join(directory, filename)
+            text = extract_text_from_docx(file_path)
+            logger.debug(text)
+            string += text
+
+    return string
+
+async def delayed_message_delete(message: Message, timeout: int = 4):
+    """
+
+    :param message: Just aiogram message object
+    :param timeout: The time after which the message will be deleted
+    """
+    await asyncio.sleep(timeout)
+    await message.delete()
 
 async def safe_download(file: File) -> str:
     """
@@ -56,3 +105,16 @@ async def safe_download(file: File) -> str:
 
     await file.bot.download_file(file.file_path, destination=file_path)
     return file_path
+
+
+def clean_text(text: str) -> str:
+    """
+    Clean the text by removing unwanted characters.
+
+    Args:
+        text (str): The input text.
+
+    Returns:
+        str: The cleaned text.
+    """
+    return text.replace('\n', ' ').replace('\t', ' ').strip()

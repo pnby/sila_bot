@@ -1,5 +1,13 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+back_to_document_management_button = InlineKeyboardButton(text="Назад", callback_data="document_management_button")
+
+back_to_document_management_keyboard = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [back_to_document_management_button]
+    ]
+)
+
 document_management_button = InlineKeyboardButton(text="Документная панель", callback_data="document_management_button")
 
 #
@@ -8,7 +16,6 @@ document_management_button = InlineKeyboardButton(text="Документная �
 choice_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
         [document_management_button],
-
     ]
 )
 

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, AsyncGenerator
 
 from app.bot.config import available_llm_models
 
@@ -7,7 +7,7 @@ from app.bot.config import available_llm_models
 class BaseOllama(ABC):
     def __init__(self, prompt: str, model: available_llm_models = available_llm_models,
                  stream: bool = False, endpoint: str = "http://ollama:11434/api/generate",
-                 system_prompt: Optional[str] = None):
+                 system_prompt: Optional[str] = None, temperature: float = 0):
         """
         Initialize the BaseLlama class.
 
@@ -23,6 +23,7 @@ class BaseOllama(ABC):
         self.stream = stream
         self.endpoint = endpoint
         self.system_prompt = system_prompt
+        self.temperature = temperature
         self.response = None
 
     @abstractmethod
@@ -33,7 +34,18 @@ class BaseOllama(ABC):
         This method should be implemented by subclasses to send a request to the model
         and store the response in self.response.
         """
-        ...
+
+    @abstractmethod
+    async def stream_response(self) -> AsyncGenerator[str, None]:
+        """
+        Stream the response from the model.
+
+        This method should be implemented by subclasses to send a streaming request to the model
+        and yield parts of the response as they are received.
+
+        Yields:
+            str: The next part of the response.
+        """
 
     @abstractmethod
     def get_formatted_response(self) -> str:
@@ -46,5 +58,3 @@ class BaseOllama(ABC):
         Returns:
             str: The formatted response.
         """
-        assert self.response is not None
-        return self.response

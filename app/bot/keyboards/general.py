@@ -14,7 +14,6 @@ start_keyboard = InlineKeyboardMarkup(
 )
 
 repeat_request_to_ai = InlineKeyboardButton(text="Спросить AI снова", callback_data="support_button")
-get_human_support_button = InlineKeyboardButton(text="Позвать человека", callback_data="get_human_support_button")
 
 #
 # In the message when the neural network responds to the user
@@ -22,7 +21,6 @@ get_human_support_button = InlineKeyboardButton(text="Позвать челов�
 answer_inline_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
         [repeat_request_to_ai],
-        [get_human_support_button]
     ])
 
 
