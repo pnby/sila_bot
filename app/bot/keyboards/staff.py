@@ -9,6 +9,7 @@ back_to_document_management_keyboard = InlineKeyboardMarkup(
 )
 
 document_management_button = InlineKeyboardButton(text="Документная панель", callback_data="document_management_button")
+faq_regeneration_button = InlineKeyboardButton(text="Регенерация FAQ", callback_data="faq_regeneration_button")
 
 #
 # Used to select keyboards
@@ -16,6 +17,7 @@ document_management_button = InlineKeyboardButton(text="Документная �
 choice_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
         [document_management_button],
+        [faq_regeneration_button]
     ]
 )
 

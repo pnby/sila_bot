@@ -7,14 +7,14 @@ import aiohttp
 from app.bot import logger
 from app.bot.api.ollama.base_ollama import BaseOllama
 from app.bot.config import available_llm_models
-from app.bot.utils.utils import clean_text
 
 
 @final
 class Ollama(BaseOllama):
     def __init__(self, prompt: str, model: available_llm_models = available_llm_models,
                  stream: bool = False, endpoint: str = "http://localhost:11434/api/generate",
-                 system_prompt: Optional[str] = None, temperature: float = 0.1):
+                 system_prompt: Optional[str] = None, temperature: float = 0.1,
+                 max_context: int = 32768, jsonify: bool = False):
         """
         Initialize the Llama class.
 
@@ -24,8 +24,10 @@ class Ollama(BaseOllama):
             stream (bool, optional): Whether to stream the response. Defaults to False.
             endpoint (str, optional): The API endpoint to send the request to. Defaults to "http://ollama:11434/api/generate".
             system_prompt (str, optional): System prompt for the model.
+            max_context (int): The maximum number of tokens in the context that the neural network can process
+            jsonify (bool): obliges the neural network to respond in the form of json
         """
-        super().__init__(prompt=prompt, model=model, stream=stream, endpoint=endpoint, system_prompt=system_prompt, temperature=temperature)
+        super().__init__(prompt=prompt, model=model, stream=stream, endpoint=endpoint, system_prompt=system_prompt, temperature=temperature, max_context=max_context, jsonify=jsonify)
 
     @override
     async def send_request(self) -> None:
@@ -41,16 +43,20 @@ class Ollama(BaseOllama):
             "prompt": self.prompt,
             "stream": self.stream,
             "options": {
-                "temperature": self.temperature
+                "temperature": self.temperature,
+                "num_ctx": self.max_context,
             },
         }
 
         if self.system_prompt is not None:
             data["system"] = self.system_prompt
 
+        if self.jsonify:
+            data['format'] = 'json'
+
         start_time = perf_counter()
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, json=data) as response:
+            async with session.post(url, json=data, timeout=1111) as response:
                 if response.status == 200:
                     result = await response.json()
                     self.response = result
@@ -78,12 +84,15 @@ class Ollama(BaseOllama):
             "stream": True,
             "options": {
                 "temperature": self.temperature,
-                "num_ctx": 32768,
+                "num_ctx": self.max_context,
             },
         }
 
         if self.system_prompt is not None:
             data["system"] = self.system_prompt
+
+        if self.jsonify:
+            data['format'] = 'json'
 
         async with aiohttp.ClientSession() as session:
             async with session.post(url, json=data) as response:

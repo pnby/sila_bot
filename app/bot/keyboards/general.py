@@ -1,5 +1,7 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+back_to_main_button = InlineKeyboardButton(text="Назад", callback_data="back_to_main_button")
+
 faq_button = InlineKeyboardButton(text='FAQ', callback_data='faq_button')
 guide_button = InlineKeyboardButton(text='Руководство', callback_data='guide_button')
 support_button = InlineKeyboardButton(text='Поддержка', callback_data='support_button')
@@ -21,6 +23,4 @@ repeat_request_to_ai = InlineKeyboardButton(text="Спросить AI снова
 answer_inline_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
         [repeat_request_to_ai],
-    ])
-
-
+])

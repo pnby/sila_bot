@@ -8,11 +8,10 @@ load_dotenv()
 
 # a constant that stores some data
 BOT_TOKEN: str = env.str("BOT_TOKEN")
-MONGO_URI = os.environ.get('MONGO_URI', "mongodb://mongo_db:27017/prod")
 
 UPLOADS_DIR = '../../uploads'
 
-#
+
 available_llm_models: Literal['qwen2:7b-instruct-fp16', 'qwen2.5:3b'] = "qwen2.5:3b"
 
 super_user_id = 6898688536

@@ -1,23 +1,33 @@
+import asyncio
+import json
 import os
-from typing import Optional
+from concurrent.futures import ThreadPoolExecutor
+from typing import Optional, List
 
 from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, Document
 
-from app.bot.config import UPLOADS_DIR
+from app.bot import logger, bot
+from app.bot.api.ollama.impl.ollama import Ollama
+from app.bot.config import UPLOADS_DIR, super_user_id
 from app.bot.keyboards.staff import choice_keyboard, document_keyboard, back_to_document_management_keyboard
 from app.bot.states.staff import StaffStates
-from app.bot.utils.utils import delayed_message_delete, create_paginated_keyboard_from_directory
+from app.bot.utils.utils import delayed_message_delete, create_paginated_keyboard_from_directory, Question, \
+    extract_text_from_all_docx_files
 
 router = Router()
+
+questions: List[Question] = []
 
 @router.message(Command(commands=["admin"]))
 async def define_post(message: Message):
     """
         Handles the /admin command.
     """
+    if message.from_user.id != super_user_id:
+        return
 
     await message.answer("Панель управления ботом открыта", reply_markup=choice_keyboard)
 
@@ -26,6 +36,9 @@ async def support_button_handler(callback_query: CallbackQuery):
     """
     Handles the 'list_document_button' callback query. Sends a list of uploaded documents.
     """
+    if callback_query.from_user.id != super_user_id:
+        return
+
     keyboard = create_paginated_keyboard_from_directory()
     await callback_query.message.edit_text(text="Список загруженных документов", reply_markup=keyboard)
 
@@ -60,8 +73,56 @@ async def load_document(callback_query: CallbackQuery, state: FSMContext):
     """
     Handles the 'load_document_button' callback query. Prompts the user to upload a document.
     """
+    if callback_query.from_user.id != super_user_id:
+        return
+
     await callback_query.message.edit_text("Загрузите документ", reply_markup=back_to_document_management_keyboard)
     await state.set_state(StaffStates.LOAD_DOCUMENT)
+
+async def handle_faq(ollama: Ollama, message: Message):
+    await ollama.send_request()
+    answer = ollama.get_formatted_response()
+
+    try:
+        data = json.loads(answer)
+        logger.debug(data)
+        for obj in data["questions"]:
+            questions.append(Question(title=obj["title"], answer=obj["answer"]))
+
+        await bot.send_message(message.chat.id, "Успешно!")
+    except (json.JSONDecodeError, KeyError) as e:
+        await message.answer("Ошибка при обработке данных FAQ.")
+        logger.warning(f"Ошибка при загрузке FAQ: {e}")
+
+    await bot.send_message(message.from_user.id, "Успешно!")
+
+
+@router.callback_query(F.data == "faq_regeneration_button")
+async def generate_faq(callback_query: CallbackQuery):
+    if callback_query.from_user.id != super_user_id:
+        return
+
+    loop = asyncio.get_running_loop()
+
+    with ThreadPoolExecutor() as executor:
+        raw_text: str = await loop.run_in_executor(executor, extract_text_from_all_docx_files, UPLOADS_DIR)
+
+    ollama = Ollama(f"""
+    Тебе нужно придумать пять вопросов-ответов основываясь на базу знаний. Ответ должен быть ТОЛЬКО в формате JSON, без комментариев и прочего.
+    <json-schema>
+    {{
+      "questions": [
+        {{
+          "title": "string",
+          "answer": "string"
+        }}
+      ]
+    }}
+    </json-schema>
+    База знаний: {raw_text}
+    """, jsonify=True)
+    await callback_query.message.answer("Генерация займет много времени...")
+    await asyncio.create_task(handle_faq(ollama, callback_query.message))
 
 @router.message(StaffStates.LOAD_DOCUMENT)
 async def handle_document(message: Message, state: FSMContext):
@@ -91,6 +152,9 @@ async def unload_document(callback_query: CallbackQuery, state: FSMContext):
     """
     Handles the 'unload_document_button' callback query. Prompts the user to enter the filename to delete.
     """
+    if callback_query.from_user.id != super_user_id:
+        return
+
     await callback_query.message.edit_text("Введите имя файла для удаления", reply_markup=back_to_document_management_keyboard)
     await state.set_state(StaffStates.UNLOAD_DOCUMENT)
 

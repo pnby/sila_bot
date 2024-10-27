@@ -7,7 +7,8 @@ from app.bot.config import available_llm_models
 class BaseOllama(ABC):
     def __init__(self, prompt: str, model: available_llm_models = available_llm_models,
                  stream: bool = False, endpoint: str = "http://ollama:11434/api/generate",
-                 system_prompt: Optional[str] = None, temperature: float = 0):
+                 system_prompt: Optional[str] = None, temperature: float = 0,
+                 max_context: int = 32768, jsonify: bool = False):
         """
         Initialize the BaseLlama class.
 
@@ -24,6 +25,8 @@ class BaseOllama(ABC):
         self.endpoint = endpoint
         self.system_prompt = system_prompt
         self.temperature = temperature
+        self.max_context = max_context
+        self.jsonify = jsonify
         self.response = None
 
     @abstractmethod

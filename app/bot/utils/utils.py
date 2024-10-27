@@ -1,5 +1,6 @@
 import asyncio
 import os
+from dataclasses import dataclass
 from functools import cache
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, File, Message
@@ -9,6 +10,11 @@ from docx import Document
 from app.bot import logger
 from app.bot.config import UPLOADS_DIR
 from app.bot.keyboards.staff import back_to_document_management_button
+
+@dataclass
+class Question:
+    title: str
+    answer: str
 
 
 def create_paginated_keyboard_from_directory(directory: str = UPLOADS_DIR, page: int = 1, items_per_page: int = 5) -> InlineKeyboardMarkup:
