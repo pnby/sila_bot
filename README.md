@@ -1,13 +1,3 @@
-<!-- CODE_QUALITY_BADGE -->
-[![Code Quality](https://img.shields.io/badge/Code%20Quality-Errors%200%20Warnings%200-brightgreen)](#code-quality-results)
-
-<!-- CODE_QUALITY_BADGE -->
-[![Code Quality](https://img.shields.io/badge/Code%20Quality-Errors%200%20Warnings%200-brightgreen)](#code-quality-results)
-
-<!-- CODE_QUALITY_BADGE -->
-[![Code Quality](https://img.shields.io/badge/Code%20Quality-Errors%200%20Warnings%200-brightgreen)](#code-quality-results)
-
-
 Этот проект представляет собой комплексное решение, включающее в себя набор контейнеров (или нет) и Telegram-бота, разработанного с использованием асинхронного фреймворка aiogram. Основная цель проекта — обеспечить эффективное взаимодействие с пользователями, используя сервисы на базе искусственного интеллекта для расширения функциональности.
 
 ## Требования
